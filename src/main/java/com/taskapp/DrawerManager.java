@@ -22,7 +22,7 @@ public class DrawerManager {
         
         NavigationDrawer.Header header = new NavigationDrawer.Header("Gluon Application",
                 "Multi View Project",
-                new Avatar(21, new Image(DrawerManager.class.getResourceAsStream("/icon.png"))));
+                new Avatar(21, new Image(DrawerManager.class.getResourceAsStream("/dalleIcon.png"))));
         drawer.setHeader(header);
         
         final Item primaryItem = new ViewItem("Primary", MaterialDesignIcon.HOME.graphic(), PRIMARY_VIEW, ViewStackPolicy.SKIP);

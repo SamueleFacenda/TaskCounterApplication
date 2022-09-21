@@ -35,7 +35,7 @@ public class TaskCounterApplication extends Application {
         Swatch.BLUE.assignTo(scene);
 
         scene.getStylesheets().add(TaskCounterApplication.class.getResource("style.css").toExternalForm());
-        ((Stage) scene.getWindow()).getIcons().add(new Image(TaskCounterApplication.class.getResourceAsStream("/icon.png")));
+        ((Stage) scene.getWindow()).getIcons().add(new Image(TaskCounterApplication.class.getResourceAsStream("/dalleIcon.png")));
     }
 
     public static void main(String args[]) {
