@@ -6,6 +6,10 @@ package com.taskapp.crypto;
  */
 
 import com.taskapp.dataClasses.*;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.BufferedReader;
@@ -13,6 +17,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 
 public class Connection{
@@ -119,6 +126,55 @@ public class Connection{
             System.out.println("Error in Connection readBye method");
             return false;
         }
+    }
+
+    public boolean login(String user, String password){
+        String json = JsonUtils.toJson(new Auth(user, password));
+        sendEncrypted(json, SERVER, "");
+        try {
+            String in = readFromServer();
+            if(in.equals("NO")){
+                System.out.println("Invalid username or password");
+                return false;
+            }
+            if(in.startsWith("OK--")){
+                in = in.substring(4);
+                String token = AESUtils.decrypt(in, sessionKey, sessionIV);
+                PersistencyManager.updateUser(user);
+                PersistencyManager.updateAuthToken(token);
+                System.out.println("Logged in as " + user);
+                return true;
+            }
+        } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException |
+                 NoSuchAlgorithmException | BadPaddingException | InvalidKeyException e) {
+            e.printStackTrace();
+            System.err.println("Error in Connection login method  " + e.getMessage());
+        }
+        return false;
+    }
+    public boolean login(String user){
+        String json = JsonUtils.toJson(new Auth(user, PersistencyManager.getAuthToken()));
+        sendEncrypted(json, SERVER, "");
+        try {
+            String in = readFromServer();
+            if(in.equals("NO")){
+                System.out.println("Invalid username or token");
+                return false;
+            }
+            if(in.equals("OK")){
+                PersistencyManager.updateUser(user);
+                System.out.println("Logged in as " + user);
+                return true;
+            }
+            if(in.equals("EXPIRED")){
+                System.out.println("Token expired");
+                return false;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error in Connection login method  " + e.getMessage());
+        }
+        return false;
     }
 
     private void sendBye(){
