@@ -107,4 +107,8 @@ public class PersistencyManager {
         return ret;
     }
 
+    public static void clearActivity() {
+        obj.put("activity", new JSONArray());
+        update();
+    }
 }

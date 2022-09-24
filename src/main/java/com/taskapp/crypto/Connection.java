@@ -224,14 +224,25 @@ public class Connection{
         cu.writeLine(CLIENT + "Bye");
     }
 
-    public void bye() throws IOException {
-        sendBye();
-        readBye();
-        socket.close();
+    public boolean bye()   {
+        try{
+            sendBye();
+            readBye();
+            socket.close();
+            return true;
+        }catch (IOException e){
+            System.err.println("Error in Connection bye method");
+            return false;
+        }
     }
 
     public boolean sendLabel(String label, String comment){
         String json = JsonUtils.toJson(new Activity(PersistencyManager.getUser(), label, new Timestamp(System.currentTimeMillis()),null, comment));
+        sendEncrypted(json, CLIENT, "");
+        return readAck();
+    }
+    public boolean sendLabel(String label, String comment, Timestamp ts){
+        String json = JsonUtils.toJson(new Activity(PersistencyManager.getUser(), label, ts,null, comment));
         sendEncrypted(json, CLIENT, "");
         return readAck();
     }
