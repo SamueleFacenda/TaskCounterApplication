@@ -21,6 +21,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.sql.Timestamp;
 
 public class Connection{
     private final Socket socket;
@@ -28,6 +29,11 @@ public class Connection{
     private static final String SERVER = "ServerSamu--", CLIENT = "ClientSamu--", ACK = "Recived";
     private SecretKey sessionKey;
     private IvParameterSpec sessionIV;
+
+    public static Socket getSocket() throws IOException {
+        //connect to samuele.ddns.net at port 9999
+        return new Socket("samuele.ddns.net", 9999);
+    }
 
 
     public Connection(Socket socket) {
@@ -44,6 +50,23 @@ public class Connection{
         }
     }
 
+    public void init() throws IOException {
+        PersistencyManager.initialize();
+        askConnection();
+        if(readFromServer().equals("true"))
+            reciveLastKey();
+        readAck();
+        sendEncryptedKey();
+        readAck();
+    }
+
+    private void sendMetadata(){
+        writeMessage(new SessionMetadata(
+                PersistencyManager.isFirtTime(),
+                PersistencyManager.getLastRSAKeyUpdate()
+        ));
+    }
+
     private boolean isLocal(){
         return !System.getProperty("os.name").startsWith("Windows");
     }
@@ -57,7 +80,7 @@ public class Connection{
             throw new IOException("Invalid input from " + Connection.SERVER);
     }
 
-    private boolean readAck() {
+    public boolean readAck() {
         try{
             String in = readFromServer();
             return in.equals(ACK);
@@ -130,7 +153,7 @@ public class Connection{
 
     public boolean login(String user, String password){
         String json = JsonUtils.toJson(new Auth(user, password));
-        sendEncrypted(json, SERVER, "");
+        sendEncrypted(json, CLIENT, "");
         try {
             String in = readFromServer();
             if(in.equals("NO")){
@@ -151,6 +174,26 @@ public class Connection{
             System.err.println("Error in Connection login method  " + e.getMessage());
         }
         return false;
+    }
+
+    public boolean register(String user, String password){
+        String json = JsonUtils.toJson(new Auth(user, password));
+        sendEncrypted(json, CLIENT, "");
+        try {
+            String in = readFromServer();
+            if(in.equals("alreadyExists"))
+                System.out.println("User already exist");
+            if(in.startsWith("OK"))
+                return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error in Connection login method  " + e.getMessage());
+        }
+        return false;
+    }
+    public void sendInt(int i){
+        writeInt(i);
+        readAck();
     }
     public boolean login(String user){
         String json = JsonUtils.toJson(new Auth(user, PersistencyManager.getAuthToken()));
@@ -181,4 +224,15 @@ public class Connection{
         cu.writeLine(CLIENT + "Bye");
     }
 
+    public void bye() throws IOException {
+        sendBye();
+        readBye();
+        socket.close();
+    }
+
+    public boolean sendLabel(String label, String comment){
+        String json = JsonUtils.toJson(new Activity(PersistencyManager.getUser(), label, new Timestamp(System.currentTimeMillis()),null, comment));
+        sendEncrypted(json, CLIENT, "");
+        return readAck();
+    }
 }
