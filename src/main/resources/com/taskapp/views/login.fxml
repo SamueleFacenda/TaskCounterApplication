@@ -3,28 +3,23 @@
 <?import com.gluonhq.charm.glisten.control.Icon?>
 <?import com.gluonhq.charm.glisten.control.TextField?>
 <?import com.gluonhq.charm.glisten.mvc.View?>
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<View fx:id="primary" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="350.0" stylesheets="@primary.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.taskapp.views.PrimaryPresenter" >
+<View id="login" fx:id="login" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="350.0" stylesheets="@login.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.taskapp.views.LoginPresenter">
     <center>
-        <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0" BorderPane.alignment="CENTER">
+        <VBox fx:id="vbox" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0" BorderPane.alignment="CENTER">
             <children>
                 <Label fx:id="label" text="Login to TickStats" />
-            <TextField floatText="username" prefHeight="37.0" prefWidth="268.0">
-               <VBox.margin>
-                  <Insets left="2" />
-               </VBox.margin>
-            </TextField>
-            <TextField floatText="password" />
-                <Button mnemonicParsing="false" onAction="#buttonClick" text="Login">
-                    <graphic>
-                        <Icon content="LANGUAGE" />
-                    </graphic>
-                </Button>
+            <TextField floatText="username"  styleClass="centered"/>
+            <TextField floatText="password"  styleClass="centered" />
+            <Button mnemonicParsing="false" onAction="#buttonClick" text="Login">
+                <graphic>
+                    <Icon content="VERIFIED_USER" />
+                </graphic>
+            </Button>
             </children>
         </VBox>
     </center>

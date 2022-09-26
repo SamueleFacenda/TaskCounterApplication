@@ -1,0 +1,19 @@
+.centered{
+    -fx-alignment: center;
+    -fx-padding: 0% 5% 0% 5%;
+}
+
+/* Language: css */
+/* Path: src\main\resources\com\taskapp\views\login.css */
+#login{
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #e3e3e3;
+    -fx-border-width: 1px;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-padding: 20px;
+}
+
+VBox{
+    -fx-fill-width: false;
+}
