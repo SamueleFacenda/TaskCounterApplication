@@ -1,5 +1,7 @@
 package com.taskapp;
 
+import com.taskapp.crypto.PersistencyManager;
+import com.taskapp.views.LoginView;
 import com.taskapp.views.PrimaryView;
 import com.taskapp.views.SecondaryView;
 import com.gluonhq.charm.glisten.application.AppManager;
@@ -15,11 +17,13 @@ public class TaskCounterApplication extends Application {
 
     public static final String PRIMARY_VIEW = HOME_VIEW;
     public static final String SECONDARY_VIEW = "Secondary View";
+    public static final String LOGIN_VIEW = "Login View";
 
     private final AppManager appManager = AppManager.initialize(this::postInit);
 
     @Override
     public void init() {
+        appManager.addViewFactory(LOGIN_VIEW, () -> new LoginView().getView());
         appManager.addViewFactory(PRIMARY_VIEW, () -> new PrimaryView().getView());
         appManager.addViewFactory(SECONDARY_VIEW, () -> new SecondaryView().getView());
 

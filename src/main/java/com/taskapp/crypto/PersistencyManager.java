@@ -111,4 +111,8 @@ public class PersistencyManager {
         obj.put("activity", new JSONArray());
         update();
     }
+
+    public static boolean isFirstTime(){
+        return obj.length() == 0;
+    }
 }

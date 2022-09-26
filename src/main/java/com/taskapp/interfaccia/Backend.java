@@ -89,4 +89,31 @@ public class Backend {
             return true;
         }
     }
+
+    public static boolean checkServerUp(){
+    try{
+            Connection connection = new Connection(Connection.getSocket());
+            connection.init();
+            connection.sendInt(3);
+            connection.readAck();
+            connection.bye();
+            return true;
+        }catch(IOException e){
+            last_log = "Connection error, maybe offline";
+            return false;
+        }
+    }
+    public static boolean checkTokenValidility(){
+        try{
+            Connection connection = new Connection(Connection.getSocket());
+            connection.init();
+            connection.sendInt(1);
+            boolean out = connection.login(PersistencyManager.getUser(), PersistencyManager.getAuthToken());
+            connection.readAck();
+            connection.bye();
+            return out;
+        }catch(IOException e){
+            return false;
+        }
+    }
 }
