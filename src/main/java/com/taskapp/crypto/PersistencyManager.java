@@ -32,7 +32,10 @@ public class PersistencyManager {
             while(in.hasNextLine()){
                 sb.append(in.nextLine());
             }
-            obj = new JSONObject(sb.toString());
+            if(sb.length() == 0)
+                obj = new JSONObject();
+            else
+                obj = new JSONObject(sb.toString());
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -61,18 +64,29 @@ public class PersistencyManager {
         try {
             return RSAUtils.fromBase64Public(obj.getString("rsaKey"));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            System.out.println("no rsa key found, persistency manager");
             throw new RuntimeException(e);
         }
     }
     public static String getUser(){
-        return obj.getString("user");
+        try{
+            return obj.getString("user");
+        }catch(JSONException e){
+            System.out.println("no user found, persistency manager");
+            return "";
+        }
     }
     public static void updateUser(String user){
         obj.put("user",user);
         update();
     }
     public static String getAuthToken(){
-        return obj.getString("authToken");
+        try{
+            return obj.getString("authToken");
+        }catch (JSONException e){
+            System.out.println("no auth token found, persistency manager");
+            return "";
+        }
     }
     public static void updateAuthToken(String authToken){
         obj.put("authToken",authToken);
@@ -82,7 +96,12 @@ public class PersistencyManager {
         return obj.length() == 0;
     }
     public static Timestamp getLastRSAKeyUpdate(){
-        return new Timestamp(obj.getLong("lastRSAKeyUpdate"));
+        try{
+            return Timestamp.valueOf(obj.getString("lastRSAKeyUpdate"));
+        }catch (JSONException e){
+            System.err.println(e.getMessage());
+            return new Timestamp(0);
+        }
     }
 
     public static void addActivity(String label, String comment){
@@ -105,6 +124,10 @@ public class PersistencyManager {
             ret[i] = new Activity(o.getString("user"), o.getString("label"), new Timestamp(o.getLong("timestamp")), null, o.getString("comment"));
         }
         return ret;
+    }
+
+    public static boolean isFirstLogin(){
+        return !obj.has("user");
     }
 
     public static void clearActivity() {

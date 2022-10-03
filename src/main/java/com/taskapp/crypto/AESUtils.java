@@ -64,7 +64,6 @@ public class AESUtils {
         StringBuilder sb = new StringBuilder();
         for(byte b : in){
             sb.append(String.format("%02X ", b));
-            sb.append(" ");
         }
         return sb.toString();
     }

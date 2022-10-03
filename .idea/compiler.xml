@@ -10,8 +10,12 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="taskcounterapplication" target="11" />
-      <module name="TaskCounterApplication" target="1.5" />
+      <module name="taskcounterapplication" target="17" />
     </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="taskcounterapplication" options="" />
+    </option>
   </component>
 </project>

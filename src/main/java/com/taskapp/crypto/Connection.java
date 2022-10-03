@@ -16,11 +16,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
 import java.sql.Timestamp;
 
 public class Connection{
@@ -31,14 +30,15 @@ public class Connection{
     private IvParameterSpec sessionIV;
 
     public static Socket getSocket() throws IOException {
-        //connect to samuele.ddns.net at port 9999
-        return new Socket("samuele.ddns.net", 9999);
+        Socket out = new Socket();
+        out.connect(new InetSocketAddress("samuele.ddns.net",9999),1500);
+        //connect to samuele.ddns.net at port 9999 with one second timeout
+        return out;
     }
 
 
     public Connection(Socket socket) {
         this.socket = socket;
-        PersistencyManager.initialize();
         try {
             cu = new CommunicatioUtils(
                     new BufferedReader(new InputStreamReader(socket.getInputStream())),
@@ -51,13 +51,19 @@ public class Connection{
     }
 
     public void init() throws IOException {
-        PersistencyManager.initialize();
         askConnection();
+        if(connectionNotAccepted())
+            throw new IOException("Connection not accepted");
+        sendMetadata();
         if(readFromServer().equals("true"))
             reciveLastKey();
         readAck();
         sendEncryptedKey();
         readAck();
+    }
+
+    private boolean connectionNotAccepted() throws IOException {
+        return !readFromServer().equals("ConnectionAccepted");
     }
 
     private void sendMetadata(){
@@ -120,6 +126,7 @@ public class Connection{
                 in = in.substring(7, in.length() - 8);
                 PersistencyManager.updateRsaKey(in);
             }
+            System.out.println("Recived RSA key: "+ in);
         }catch(IOException e){
             System.err.println("Error in Connection reciveLastKey method");
         }catch(Exception e){
@@ -129,15 +136,31 @@ public class Connection{
     private void sendEncryptedKey(){
         try{
             sessionIV = AESUtils.generateIv();
-            sessionKey = AESUtils.generateKey(1024);
+            sessionKey = AESUtils.generateKey(256);
             String key = AESUtils.toBase64(sessionKey);
             String iv = AESUtils.byteArrayToString(sessionIV.getIV());
             String json = JsonUtils.toJson(new AesKey(key, iv));
+            PublicKey publicKey = PersistencyManager.getRsaKey();
             json = RSAUtils.toBase64(RSAUtils.encrypt(json, PersistencyManager.getRsaKey()));
-            cu.writeLine(SERVER + json);
+            cu.writeLine(CLIENT + json);
         }catch(Exception e){
             System.err.println("Error in Connection sendEncryptedKey method");
             e.printStackTrace();
+        }
+    }
+
+    private String hash(String s){
+        try {
+            byte[] ha = MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * ha.length);
+            for (byte b : ha) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            return null;
         }
     }
 
@@ -151,7 +174,9 @@ public class Connection{
         }
     }
 
-    public boolean login(String user, String password){
+    public boolean login(String user, String password, boolean hash){
+        if(hash)
+            password = hash(password);
         String json = JsonUtils.toJson(new Auth(user, password));
         sendEncrypted(json, CLIENT, "");
         try {
@@ -168,6 +193,8 @@ public class Connection{
                 System.out.println("Logged in as " + user);
                 return true;
             }
+            if(in.startsWith("OK"))
+                return true;
         } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException |
                  NoSuchAlgorithmException | BadPaddingException | InvalidKeyException e) {
             e.printStackTrace();
@@ -193,7 +220,6 @@ public class Connection{
     }
     public void sendInt(int i){
         writeInt(i);
-        readAck();
     }
     public boolean login(String user){
         String json = JsonUtils.toJson(new Auth(user, PersistencyManager.getAuthToken()));

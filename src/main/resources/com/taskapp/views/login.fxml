@@ -8,18 +8,20 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<View id="login" fx:id="login" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="350.0" stylesheets="@login.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.taskapp.views.LoginPresenter">
+<?import javafx.scene.control.PasswordField?>
+<View id="login" fx:id="login" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="350.0" stylesheets="@css/login.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.taskapp.views.LoginPresenter">
     <center>
         <VBox fx:id="vbox" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="15.0" BorderPane.alignment="CENTER">
             <children>
                 <Label fx:id="label" text="Login to TickStats" />
-            <TextField floatText="username"  styleClass="centered"/>
-            <TextField floatText="password"  styleClass="centered" />
-            <Button mnemonicParsing="false" onAction="#buttonClick" text="Login">
-                <graphic>
-                    <Icon content="VERIFIED_USER" />
-                </graphic>
-            </Button>
+                <TextField fx:id="username" promptText="username"  styleClass="centered"/>
+                <PasswordField fx:id="password" promptText="password"  styleClass="centered" />
+                <Button mnemonicParsing="false" onAction="#buttonClick" text="Login">
+                    <graphic>
+                        <Icon content="VERIFIED_USER" />
+                    </graphic>
+                </Button>
+                <Label fx:id="out" style="-fx-text-fill: red" />
             </children>
         </VBox>
     </center>

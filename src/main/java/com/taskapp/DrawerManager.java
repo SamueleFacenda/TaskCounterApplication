@@ -12,19 +12,20 @@ import com.gluonhq.charm.glisten.control.NavigationDrawer.ViewItem;
 import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
 import javafx.scene.image.Image;
 
-import static com.taskapp.TaskCounterApplication.PRIMARY_VIEW;
-import static com.taskapp.TaskCounterApplication.SECONDARY_VIEW;
+import java.util.Objects;
+
+import static com.taskapp.TaskCounterApplication.*;
 
 public class DrawerManager {
 
     public static void buildDrawer(AppManager app) {
         NavigationDrawer drawer = app.getDrawer();
         
-        NavigationDrawer.Header header = new NavigationDrawer.Header("Gluon Application",
-                "Multi View Project",
-                new Avatar(21, new Image(DrawerManager.class.getResourceAsStream("/dalleIcon.png"))));
+        NavigationDrawer.Header header = new NavigationDrawer.Header("TickStats",
+                "Manage and track your days",
+                new Avatar(21, new Image(Objects.requireNonNull(DrawerManager.class.getResourceAsStream("/dalleIcon.png")))));
         drawer.setHeader(header);
-        
+
         final Item primaryItem = new ViewItem("Primary", MaterialDesignIcon.HOME.graphic(), PRIMARY_VIEW, ViewStackPolicy.SKIP);
         final Item secondaryItem = new ViewItem("Secondary", MaterialDesignIcon.DASHBOARD.graphic(), SECONDARY_VIEW);
         drawer.getItems().addAll(primaryItem, secondaryItem);

@@ -16,9 +16,11 @@ public class Backend {
             Connection connection = new Connection(Connection.getSocket());
             connection.init();
             connection.sendInt(1);
-            if (connection.login(username, password))
-                return connection.readAck() && connection.bye();
-            connection.bye();
+            connection.readAck();
+            System.out.println("Sending username and password");
+            boolean out = connection.login(username, password, true);
+            quit(connection);
+            return out;
         }catch(IOException e){
             last_log = "Connection error, maybe offline";
         }
@@ -29,8 +31,10 @@ public class Backend {
             Connection connection = new Connection(Connection.getSocket());
             connection.init();
             connection.sendInt(0);
-            if (connection.register(username, password))
-                return connection.readAck() && connection.bye();
+            connection.readAck();
+            boolean out = connection.register(username, password);
+            quit(connection);
+            return out;
         }catch(IOException e){
             last_log = "Connection error, maybe offline";
         }
@@ -44,6 +48,7 @@ public class Backend {
             if(!login())
                 return false;
             connection.sendInt(2);
+            connection.readAck();
             connection.sendLabel(label, comment);
             connection.readAck();
             connection.bye();
@@ -56,13 +61,20 @@ public class Backend {
     }
 
     private static boolean login(){
+        System.out.println("Login");
         try{
             Connection connection = new Connection(Connection.getSocket());
             connection.init();
+            if(PersistencyManager.isFirstLogin()){
+                quit(connection);
+                return false;
+            }
             connection.sendInt(1);
-            boolean out = connection.login(PersistencyManager.getUser(), PersistencyManager.getAuthToken());
+            connection.readAck();
+            boolean out = connection.login(PersistencyManager.getUser(), PersistencyManager.getAuthToken(), false);
             connection.readAck();
             connection.bye();
+            System.out.println("Login: " + out);
             return out;
         }catch(IOException e){
             last_log = "Connection error, maybe offline";
@@ -78,6 +90,7 @@ public class Backend {
                 return false;
             for(Activity a: PersistencyManager.getActivity()){
                 connection.sendInt(2);
+                connection.readAck();
                 connection.sendLabel(a.label(), a.comment(), a.ts());
                 connection.readAck();
             }
@@ -91,29 +104,46 @@ public class Backend {
     }
 
     public static boolean checkServerUp(){
-    try{
+        System.out.println("Check server up");
+        try{
             Connection connection = new Connection(Connection.getSocket());
             connection.init();
             connection.sendInt(3);
             connection.readAck();
-            connection.bye();
+            if(connection.bye())
+                System.out.println("Bye from server correct");
+            else
+                System.out.println("Bye from server incorrect");
+            System.out.println("Check server up: true");
             return true;
         }catch(IOException e){
             last_log = "Connection error, maybe offline";
+            System.out.println("Check server up: false");
+            System.out.println(e.getMessage());
             return false;
         }
     }
     public static boolean checkTokenValidility(){
-        try{
+        if(PersistencyManager.isFirstLogin()) {
+            System.out.println("Check token validility: false");
+            return false;
+        }try{
             Connection connection = new Connection(Connection.getSocket());
             connection.init();
             connection.sendInt(1);
-            boolean out = connection.login(PersistencyManager.getUser(), PersistencyManager.getAuthToken());
             connection.readAck();
-            connection.bye();
+            boolean out = connection.login(PersistencyManager.getUser(), PersistencyManager.getAuthToken(), false);
+            quit(connection);
+            System.out.println("Check token validility: " + out);
             return out;
         }catch(IOException e){
             return false;
         }
+    }
+
+    private static void quit(Connection c){
+        c.sendInt(3);
+        c.readAck();
+        c.bye();
     }
 }

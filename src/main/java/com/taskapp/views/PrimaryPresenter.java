@@ -4,8 +4,12 @@ import com.gluonhq.charm.glisten.application.AppManager;
 import com.gluonhq.charm.glisten.control.AppBar;
 import com.gluonhq.charm.glisten.mvc.View;
 import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
+import com.taskapp.TaskCounterApplication;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+
+import static com.taskapp.TaskCounterApplication.SERVER_UP;
+import static com.taskapp.TaskCounterApplication.netCheck;
 
 public class PrimaryPresenter {
 
@@ -13,7 +17,7 @@ public class PrimaryPresenter {
     private View primary;
 
     @FXML
-    private Label label;
+    private Label label, status;
 
     public void initialize() {
         primary.showingProperty().addListener((obs, oldValue, newValue) -> {
@@ -26,6 +30,10 @@ public class PrimaryPresenter {
                         System.out.println("Search")));
             }
         });
+
+        netCheck.P();
+        status.setText("Server is " + (SERVER_UP != null && SERVER_UP ? "up" : "down"));
+        netCheck.V();
     }
     
     @FXML

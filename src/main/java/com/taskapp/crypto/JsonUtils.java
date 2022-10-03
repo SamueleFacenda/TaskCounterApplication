@@ -76,6 +76,7 @@ public class JsonUtils {
     }
 
     public static <T> String toJson(T in){
+        /*
         return switch(in){
             case Auth a -> getAuth(a);
             case Activity a -> getActivity(a);
@@ -83,9 +84,23 @@ public class JsonUtils {
             case SessionMetadata a -> getSessioneMetadata(a);
             default -> null;
         };
+
+         */
+        if(in instanceof Auth){
+            return getAuth((Auth) in);
+        }else if(in instanceof Activity){
+            return getActivity((Activity) in);
+        }else if(in instanceof AesKey){
+            return getAesKey((AesKey) in);
+        }else if(in instanceof SessionMetadata){
+            return getSessioneMetadata((SessionMetadata) in);
+        }else{
+            return null;
+        }
     }
     @SuppressWarnings("unchecked")
     public static <T> T fromJson(String in, Class<T> clazz){
+        /*
         return (T) switch(clazz.getSimpleName()){
             case "Auth" -> getAuth(in);
             case "Activity" -> getActivity(in);
@@ -93,6 +108,18 @@ public class JsonUtils {
             case "SessionMetadata" -> getSessionMetadata(in);
             default -> null;
         };
+         */
+        if(clazz.getSimpleName().equals("Auth")){
+            return (T) getAuth(in);
+        }else if(clazz.getSimpleName().equals("Activity")){
+            return (T) getActivity(in);
+        }else if(clazz.getSimpleName().equals("AesKey")){
+            return (T) getAesKey(in);
+        }else if(clazz.getSimpleName().equals("SessionMetadata")){
+            return (T) getSessionMetadata(in);
+        }else{
+            return null;
+        }
     }
 
 }
