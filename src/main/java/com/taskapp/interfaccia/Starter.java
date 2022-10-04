@@ -15,8 +15,12 @@ public class Starter extends Thread{
         netCheck.P();
         SERVER_UP = serverUp;
         netCheck.V();
-        if(!SERVER_UP)
+        if(!SERVER_UP) {
+            netCheck.P();
+            LOGGED_IN = false;
+            netCheck.V();
             return;
+        }
         boolean loggedin = Backend.checkTokenValidility();
         netCheck.P();
         LOGGED_IN = loggedin;

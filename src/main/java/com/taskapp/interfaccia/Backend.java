@@ -60,6 +60,27 @@ public class Backend {
         }
     }
 
+    public static boolean load(Activity[] activity){
+        try{
+            Connection connection = new Connection(Connection.getSocket());
+            connection.init();
+            if(!login())
+                return false;
+            for(Activity a : activity){
+                connection.sendInt(2);
+                connection.readAck();
+                connection.sendLabel(a.label(), a.comment());
+            }
+            connection.bye();
+            return true;
+        }catch(IOException e){
+            last_log = "Connection error, maybe offline";
+            for(Activity a : activity)
+                PersistencyManager.addActivity(a.label(), a.comment());
+            return true;
+        }
+    }
+
     private static boolean login(){
         System.out.println("Login");
         try{

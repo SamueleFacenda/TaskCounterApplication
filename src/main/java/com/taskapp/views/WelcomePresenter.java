@@ -14,7 +14,7 @@ import javafx.util.Duration;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.taskapp.TaskCounterApplication.netCheck;
+import static com.taskapp.TaskCounterApplication.*;
 
 
 public class WelcomePresenter {
@@ -41,17 +41,17 @@ public class WelcomePresenter {
                 new KeyFrame(Duration.millis(500), e -> {
                     boolean isset;
                     netCheck.P();
-                    isset = TaskCounterApplication.SERVER_UP != null;
+                    isset = SERVER_UP != null;
                     netCheck.V();
                     if(isset){
                         boolean isup;
                         netCheck.P();
-                        isup = TaskCounterApplication.SERVER_UP;
+                        isup = SERVER_UP;
                         netCheck.V();
                         if(isup)
-                            AppManager.getInstance().switchView(TaskCounterApplication.LOGIN_VIEW);
+                            AppManager.getInstance().switchView(LOGIN_VIEW);
                         else
-                            AppManager.getInstance().switchView(TaskCounterApplication.PRIMARY_VIEW);
+                            AppManager.getInstance().switchView(PRIMARY_VIEW);
                         t.stop();
                     }else
                         if(loading != null)
@@ -63,11 +63,11 @@ public class WelcomePresenter {
 
     @FXML
     private void hyperLogin(){
-        AppManager.getInstance().switchView(TaskCounterApplication.LOGIN_VIEW);
+        AppManager.getInstance().switchView(LOGIN_VIEW);
     }
     @FXML
     private void hyperRegister(){
-        AppManager.getInstance().switchView(TaskCounterApplication.REGISTER_VIEW);
+        AppManager.getInstance().switchView(REGISTER_VIEW);
     }
     @FXML
     private void hyperTutorial(){

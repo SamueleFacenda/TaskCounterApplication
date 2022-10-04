@@ -1,6 +1,7 @@
 package com.taskapp.crypto;
 
 import com.taskapp.dataClasses.Activity;
+import com.taskapp.dataClasses.Lbl;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,9 +16,17 @@ import java.security.spec.InvalidKeySpecException;
 import java.sql.Timestamp;
 import java.util.Scanner;
 
+/**
+ * classe che si occupa del salvataggio dei dati sul dispositivo, in un file json, tutto ciò che deve rimanere
+ * è gestito da questa classe
+ */
 public class PersistencyManager {
     private static File f;
     private static JSONObject obj;
+
+    /**
+     * va chiamato all'avvio dell'applicazione, se il file non esiste lo crea, altrimenti lo legge
+     */
     public static void initialize(){
         f = new File("persistency.json");
         if(!f.exists()){
@@ -27,6 +36,7 @@ public class PersistencyManager {
                 throw new RuntimeException(e);
             }
         }
+        //legge, crea una string a e converte il json in oggetto dal file
         try(Scanner in = new Scanner(f)) {
             StringBuilder sb = new StringBuilder();
             while(in.hasNextLine()){
@@ -40,6 +50,10 @@ public class PersistencyManager {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * scrive i cambiamenti sul file
+     */
     private static void update(){
         try(FileWriter fw = new FileWriter(f)){
             fw.write(obj.toString());
@@ -47,10 +61,11 @@ public class PersistencyManager {
             throw new RuntimeException(e);
         }
     }
-    public static void put(String key, String value){
-        obj.put(key,value);
-        update();
-    }
+
+    /*
+    *   i seguenti metodi sono tutti uguali, semplicemente scrivono e leggono un dato dal file
+     */
+
     public static void updateRsaKey(String key){
         obj.put("rsaKey",key);
         obj.put("lastRSAKeyUpdate",new Timestamp(System.currentTimeMillis()).toString());
@@ -73,6 +88,7 @@ public class PersistencyManager {
             return obj.getString("user");
         }catch(JSONException e){
             System.out.println("no user found, persistency manager");
+            e.printStackTrace();
             return "";
         }
     }
@@ -92,7 +108,12 @@ public class PersistencyManager {
         obj.put("authToken",authToken);
         update();
     }
-    public static boolean isFirtTime(){
+
+    /**
+     * controlla se è il primo avvio dell'applicazione
+     * @return true se è il primo avvio, false altrimenti
+     */
+    public static boolean isFirstTime(){
         return obj.length() == 0;
     }
     public static Timestamp getLastRSAKeyUpdate(){
@@ -104,10 +125,20 @@ public class PersistencyManager {
         }
     }
 
+    /**
+     * se il server non è raggiungibile allora salvo le attività in locale
+     * @param label label dell'attività
+     * @param comment commento dell'attività
+     */
     public static void addActivity(String label, String comment){
-        JSONArray jo = obj.getJSONArray("activity");
+        JSONArray jo;
+        try{
+            jo = obj.getJSONArray("activity");
+        }catch(JSONException e){
+            jo = new JSONArray();
+        }
         JSONObject niu = new JSONObject();
-        niu.put("user", getUser());
+        niu.put("user", "");
         niu.put("label", label);
         niu.put("comment", comment);
         niu.put("timestamp", new Timestamp(System.currentTimeMillis()).toString());
@@ -117,7 +148,12 @@ public class PersistencyManager {
     }
 
     public static Activity[] getActivity(){
-        JSONArray jo = obj.getJSONArray("activity");
+        JSONArray jo;
+        try{
+            jo = obj.getJSONArray("activity");
+        }catch(JSONException e){
+            jo = new JSONArray();
+        }
         Activity[] ret = new Activity[jo.length()];
         for(int i = 0; i < jo.length(); i++){
             JSONObject o = jo.getJSONObject(i);
@@ -126,6 +162,13 @@ public class PersistencyManager {
         return ret;
     }
 
+    public static boolean hasActivity(){
+        return obj.get("activity") != null && obj.getJSONArray("activity").length() > 0;
+    }
+
+    /**
+     * controlla se è mai stato fatto un login con successo
+     */
     public static boolean isFirstLogin(){
         return !obj.has("user");
     }
@@ -135,7 +178,33 @@ public class PersistencyManager {
         update();
     }
 
-    public static boolean isFirstTime(){
-        return obj.length() == 0;
+    public static void addLabel(Lbl label) {
+        JSONObject jo;
+        try{
+            jo = obj.getJSONObject("labels");
+        }catch (JSONException e){
+            obj.put("labels", new JSONObject());
+            jo = obj.getJSONObject("labels");
+        }
+        jo.put(label.getLabel(), label.getCount());
+        obj.put("labels", jo);
+        update();
     }
+    public static Lbl[] getLabel(){
+        try{
+            JSONObject jo = obj.getJSONObject("labels");
+            Lbl[] ret = new Lbl[jo.length()];
+            int i = 0;
+            for(String key : jo.keySet()){
+                ret[i] = new Lbl(key, jo.getInt(key));
+                i++;
+            }
+            return ret;
+        }catch (JSONException e){
+            obj.put("labels", new JSONObject());
+            return new Lbl[0];
+        }
+
+    }
+
 }

@@ -28,10 +28,11 @@ public class Connection{
     private static final String SERVER = "ServerSamu--", CLIENT = "ClientSamu--", ACK = "Recived";
     private SecretKey sessionKey;
     private IvParameterSpec sessionIV;
+    public static final int TIMEOUT = 2000;// 10000; //1500
 
     public static Socket getSocket() throws IOException {
         Socket out = new Socket();
-        out.connect(new InetSocketAddress("samuele.ddns.net",9999),1500);
+        out.connect(new InetSocketAddress("samuele.ddns.net",9999),TIMEOUT);
         //connect to samuele.ddns.net at port 9999 with one second timeout
         return out;
     }
@@ -68,7 +69,7 @@ public class Connection{
 
     private void sendMetadata(){
         writeMessage(new SessionMetadata(
-                PersistencyManager.isFirtTime(),
+                PersistencyManager.isFirstTime(),
                 PersistencyManager.getLastRSAKeyUpdate()
         ));
     }
