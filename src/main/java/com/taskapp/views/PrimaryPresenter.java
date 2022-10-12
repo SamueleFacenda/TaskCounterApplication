@@ -5,17 +5,14 @@ import com.gluonhq.charm.glisten.control.AppBar;
 import com.gluonhq.charm.glisten.control.AutoCompleteTextField;
 import com.gluonhq.charm.glisten.mvc.View;
 import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
-import com.taskapp.TaskCounterApplication;
 import com.taskapp.interfaccia.LabelManager;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 
 import java.util.List;
 
-import static com.taskapp.TaskCounterApplication.SERVER_UP;
+import static com.taskapp.TaskCounterApplication.SERVER_REACHABLE;
 import static com.taskapp.TaskCounterApplication.netCheck;
 
 public class PrimaryPresenter {
@@ -44,13 +41,14 @@ public class PrimaryPresenter {
             }
         });
         netCheck.P();
-        status.setText("Server is " + (SERVER_UP != null && SERVER_UP ? "up" : "down"));
+        status.setText("Server is " + (SERVER_REACHABLE != null && SERVER_REACHABLE ? "up" : "down"));
         netCheck.V();
 
         lbl.setCompleter(t -> List.of(LabelManager.getLabels(t)));
         lbl.valueProperty().addListener((observable, oldValue, newValue) -> {
             lbl.setText(newValue);
         });
+        //prossimo step: mettere un bottone dentro la questo textfield
 
         //test che non funzionano per avere l'autocompletamento appena clicco il campo, con click, touch e focus
         lbl.setOnMouseClicked(e -> lbl.search());

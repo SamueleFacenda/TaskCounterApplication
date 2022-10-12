@@ -11,6 +11,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 
+import static com.taskapp.TaskCounterApplication.LOGGED_IN;
+import static com.taskapp.TaskCounterApplication.netCheck;
+
 public class LoginPresenter {
 
     @FXML
@@ -41,7 +44,7 @@ public class LoginPresenter {
     private void buttonClick() {
         //login
         String user = username.getText().trim(), pass = password.getText().trim();
-        if(!clickOffLine && !Backend.checkServerUp()){//skip if is second click offline
+        if(!clickOffLine && !Backend.checkServerReachable()){//skip if is second click offline
             System.out.println("Server is down");
             out.setText("Server is down, your data will be saved locally...\n Press again this button the login button to proceed");
             clickOffLine = true;
@@ -52,6 +55,10 @@ public class LoginPresenter {
             System.out.println("Login failed");
             out.setText("Login failed");
             return;
+        }else if(!clickOffLine){
+            netCheck.P();
+            LOGGED_IN = true;
+            netCheck.V();
         }
         AppManager.getInstance().switchView(TaskCounterApplication.PRIMARY_VIEW);
     }

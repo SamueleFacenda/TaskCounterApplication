@@ -7,9 +7,6 @@ package com.taskapp.crypto;
 
 import com.taskapp.dataClasses.*;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.BufferedReader;
@@ -21,6 +18,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.sql.Timestamp;
+import java.util.function.Function;
 
 public class Connection{
     private final Socket socket;
@@ -32,8 +30,9 @@ public class Connection{
 
     public static Socket getSocket() throws IOException {
         Socket out = new Socket();
+        //connect to samuele.ddns.net at port 9999 with timeout
         out.connect(new InetSocketAddress("samuele.ddns.net",9999),TIMEOUT);
-        //connect to samuele.ddns.net at port 9999 with one second timeout
+        out.setSoTimeout(TIMEOUT);
         return out;
     }
 
@@ -74,17 +73,13 @@ public class Connection{
         ));
     }
 
-    private boolean isLocal(){
-        return !System.getProperty("os.name").startsWith("Windows");
-    }
-
 
     private String readFromServer() throws IOException {
         String line = cu.readLine();
         if(line.startsWith(Connection.SERVER)){
             return line.substring(Connection.SERVER.length());
         }else
-            throw new IOException("Invalid input from " + Connection.SERVER);
+            throw new IOException("Invalid input from " + Connection.SERVER + " : " + line);
     }
 
     public boolean readAck() {
@@ -111,13 +106,9 @@ public class Connection{
     }
 
 
-    private void sendEncrypted(String message, String prefix, String suffix) {
-        try {
-            String encrypted = AESUtils.encrypt(message, sessionKey, sessionIV);
-            cu.writeLine(prefix + encrypted + suffix);
-        } catch (Exception e) {
-            System.err.println("Error in Connection sendEncrypted method");
-        }
+    private void sendEncrypted(String message, String prefix) throws GeneralSecurityException {
+        String encrypted = AESUtils.encrypt(message, sessionKey, sessionIV);
+        cu.writeLine(prefix + encrypted);
     }
 
     private void reciveLastKey(){
@@ -142,7 +133,7 @@ public class Connection{
             String iv = AESUtils.byteArrayToString(sessionIV.getIV());
             String json = JsonUtils.toJson(new AesKey(key, iv));
             PublicKey publicKey = PersistencyManager.getRsaKey();
-            json = RSAUtils.toBase64(RSAUtils.encrypt(json, PersistencyManager.getRsaKey()));
+            json = RSAUtils.toBase64(RSAUtils.encrypt(json, publicKey));
             cu.writeLine(CLIENT + json);
         }catch(Exception e){
             System.err.println("Error in Connection sendEncryptedKey method");
@@ -175,77 +166,78 @@ public class Connection{
         }
     }
 
-    public boolean login(String user, String password, boolean hash){
-        if(hash)
-            password = hash(password);
-        String json = JsonUtils.toJson(new Auth(user, password));
-        sendEncrypted(json, CLIENT, "");
+    private boolean loginTemplate(Auth auth, Function<String, Boolean> f){
+        String json = JsonUtils.toJson(auth);
+        try{
+            sendEncrypted(json, CLIENT);
+        }catch(GeneralSecurityException e){
+            e.printStackTrace();
+            return false;
+        }
         try {
             String in = readFromServer();
+            return f.apply(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error in Connection login method  " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean login(String user, String password){
+        password = hash(password);
+        return loginTemplate(new Auth(user, password), in -> {
             if(in.equals("NO")){
                 System.out.println("Invalid username or password");
                 return false;
             }
             if(in.startsWith("OK--")){
-                in = in.substring(4);
-                String token = AESUtils.decrypt(in, sessionKey, sessionIV);
-                PersistencyManager.updateUser(user);
-                PersistencyManager.updateAuthToken(token);
-                System.out.println("Logged in as " + user);
-                return true;
+                try{
+                    in = in.substring(4);
+                    String token = AESUtils.decrypt(in, sessionKey, sessionIV);
+                    PersistencyManager.updateUser(user);
+                    PersistencyManager.updateAuthToken(token);
+                    System.out.println("Logged in as " + user);
+                }catch(GeneralSecurityException e){
+                    e.printStackTrace();
+                    System.err.println("Error in Connection login method, invalid token or something crypto");
+                }
+                return true;//comunque sono autenticato, ma non ho il token
             }
-            if(in.startsWith("OK"))
-                return true;
-        } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | IllegalBlockSizeException |
-                 NoSuchAlgorithmException | BadPaddingException | InvalidKeyException e) {
-            e.printStackTrace();
-            System.err.println("Error in Connection login method  " + e.getMessage());
-        }
-        return false;
+            return in.startsWith("OK");//può essere che non mi venga mandato il token
+        });
+    }
+    public boolean login(){
+        return loginTemplate(new Auth(PersistencyManager.getUser(), PersistencyManager.getAuthToken()) ,s -> {
+            switch (s) {
+                case "OK":
+                    System.out.println("Logged in as " + PersistencyManager.getUser());
+                    return true;
+                case "NO":
+                    System.out.println("Invalid username or token");
+                    return false;
+                case "EXPIRED":
+                    System.out.println("Token expired");
+                    return false;
+                default:
+                    System.out.println("Invalid input from " + Connection.SERVER);
+                    return false;
+            }
+        });
     }
 
     public boolean register(String user, String password){
-        String json = JsonUtils.toJson(new Auth(user, password));
-        sendEncrypted(json, CLIENT, "");
-        try {
-            String in = readFromServer();
+        password = hash(password);
+        return loginTemplate(new Auth(user, password), in -> {
             if(in.equals("alreadyExists"))
                 System.out.println("User already exist");
-            if(in.startsWith("OK"))
-                return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Error in Connection login method  " + e.getMessage());
-        }
-        return false;
+            return in.startsWith("OK");
+        });
     }
     public void sendInt(int i){
         writeInt(i);
     }
-    public boolean login(String user){
-        String json = JsonUtils.toJson(new Auth(user, PersistencyManager.getAuthToken()));
-        sendEncrypted(json, SERVER, "");
-        try {
-            String in = readFromServer();
-            if(in.equals("NO")){
-                System.out.println("Invalid username or token");
-                return false;
-            }
-            if(in.equals("OK")){
-                PersistencyManager.updateUser(user);
-                System.out.println("Logged in as " + user);
-                return true;
-            }
-            if(in.equals("EXPIRED")){
-                System.out.println("Token expired");
-                return false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Error in Connection login method  " + e.getMessage());
-        }
-        return false;
-    }
+
 
     private void sendBye(){
         cu.writeLine(CLIENT + "Bye");
@@ -263,14 +255,8 @@ public class Connection{
         }
     }
 
-    public boolean sendLabel(String label, String comment){
-        String json = JsonUtils.toJson(new Activity(PersistencyManager.getUser(), label, new Timestamp(System.currentTimeMillis()),null, comment));
-        sendEncrypted(json, CLIENT, "");
-        return readAck();
-    }
-    public boolean sendLabel(String label, String comment, Timestamp ts){
+    public void sendLabel(String label, String comment, Timestamp ts) throws GeneralSecurityException {
         String json = JsonUtils.toJson(new Activity(PersistencyManager.getUser(), label, ts,null, comment));
-        sendEncrypted(json, CLIENT, "");
-        return readAck();
+        sendEncrypted(json, CLIENT);
     }
 }

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Scanner;
 
@@ -114,7 +115,7 @@ public class PersistencyManager {
      * @return true se è il primo avvio, false altrimenti
      */
     public static boolean isFirstTime(){
-        return obj.length() == 0;
+        return obj.length() == 1;//labels key is always added in the initialization
     }
     public static Timestamp getLastRSAKeyUpdate(){
         try{
@@ -130,7 +131,7 @@ public class PersistencyManager {
      * @param label label dell'attività
      * @param comment commento dell'attività
      */
-    public static void addActivity(String label, String comment){
+    public static void addActivity(String label, String comment, Timestamp ts){
         JSONArray jo;
         try{
             jo = obj.getJSONArray("activity");
@@ -141,7 +142,7 @@ public class PersistencyManager {
         niu.put("user", "");
         niu.put("label", label);
         niu.put("comment", comment);
-        niu.put("timestamp", new Timestamp(System.currentTimeMillis()).toString());
+        niu.put("timestamp", ts.toString());
         jo.put(niu);
         obj.put("activity", jo);
         update();
@@ -157,7 +158,7 @@ public class PersistencyManager {
         Activity[] ret = new Activity[jo.length()];
         for(int i = 0; i < jo.length(); i++){
             JSONObject o = jo.getJSONObject(i);
-            ret[i] = new Activity(o.getString("user"), o.getString("label"), new Timestamp(o.getLong("timestamp")), null, o.getString("comment"));
+            ret[i] = new Activity(o.getString("user"), o.getString("label"), Timestamp.valueOf(o.getString("timestamp")), null, o.getString("comment"));
         }
         return ret;
     }

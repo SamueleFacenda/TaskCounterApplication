@@ -24,7 +24,7 @@ public class TaskCounterApplication extends Application {
     public static final String WELCOME_VIEW = "Welcome View";
     public static final String REGISTER_VIEW = "Register View";
     public static final String LOGIN_VIEW = "Login View";
-    public static Boolean FIRST_TIME = null, SERVER_UP = null, LOGGED_IN = null;
+    public static Boolean FIRST_TIME = null, SERVER_REACHABLE = null, LOGGED_IN = null;
     public static Semaforo netCheck = new Semaforo(1);
 
     private final AppManager appManager = AppManager.initialize(this::postInit);
@@ -45,6 +45,13 @@ public class TaskCounterApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        //if it's the first time the app is launched, show the welcome view and exit this method
+        boolean firstTime = PersistencyManager.isFirstTime();
+        System.out.println("first time: " + firstTime);
+        netCheck.P();
+        FIRST_TIME = firstTime;
+        netCheck.V();
+
         appManager.start(primaryStage);
         new Starter().start();//start checking server status
     }
@@ -54,18 +61,6 @@ public class TaskCounterApplication extends Application {
         scene.getStylesheets().add(Objects.requireNonNull(TaskCounterApplication.class.getResource("style.css")).toExternalForm());
         ((Stage) scene.getWindow()).getIcons().add(new Image(Objects.requireNonNull(TaskCounterApplication.class.getResourceAsStream("/dalleIcon.png"))));
 
-        //if it's the first time the app is launched, show the welcome view and exit this method
-        if(PersistencyManager.isFirstTime()){
-            netCheck.P();
-            FIRST_TIME = true;
-            netCheck.V();
-            AppManager.getInstance().switchView(WELCOME_VIEW);
-            return;
-        }else{
-            netCheck.P();
-            FIRST_TIME = false;
-            netCheck.V();
-        }
     }
 
     public static void main(String[] args) {

@@ -14,13 +14,13 @@ public class CommunicatioUtils {
     }
 
     public String readLine() {
-        StringBuilder line = new StringBuilder();
         try {
-            line.append(in.readLine());
+            return in.readLine();
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Error in CommunicatioUtils readLine method");
+            return null;
         }
-        return line.toString();
     }
 
     private boolean checkIfEnd(StringBuilder line, String end) {

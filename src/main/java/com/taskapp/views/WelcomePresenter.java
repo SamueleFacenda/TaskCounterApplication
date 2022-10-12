@@ -5,7 +5,6 @@ import com.gluonhq.charm.glisten.application.AppManager;
 import com.gluonhq.charm.glisten.control.AppBar;
 import com.gluonhq.charm.glisten.mvc.View;
 import com.gluonhq.charm.glisten.visual.MaterialDesignIcon;
-import com.taskapp.TaskCounterApplication;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -35,18 +34,19 @@ public class WelcomePresenter {
             }
         });
 
+        /*
         AtomicInteger i = new AtomicInteger();
         Timeline t = new Timeline();
         t.getKeyFrames().add(
                 new KeyFrame(Duration.millis(500), e -> {
                     boolean isset;
                     netCheck.P();
-                    isset = SERVER_UP != null;
+                    isset = SERVER_REACHABLE != null;
                     netCheck.V();
                     if(isset){
                         boolean isup;
                         netCheck.P();
-                        isup = SERVER_UP;
+                        isup = SERVER_REACHABLE;
                         netCheck.V();
                         if(isup)
                             AppManager.getInstance().switchView(LOGIN_VIEW);
@@ -58,7 +58,7 @@ public class WelcomePresenter {
                             loading.setText("Loading" + ".".repeat(i.getAndIncrement() % 4));
                 }));
         t.setCycleCount(Timeline.INDEFINITE);
-        t.play();
+        t.play();*/
     }
 
     @FXML

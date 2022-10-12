@@ -5,6 +5,8 @@ import com.taskapp.crypto.PersistencyManager;
 import com.taskapp.dataClasses.Activity;
 import com.taskapp.dataClasses.Lbl;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -22,7 +24,7 @@ public class LabelManager {
         public void run() {
             while(true){
                 netCheck.P();
-                if(SERVER_UP != null) {
+                if(SERVER_REACHABLE != null) {
                     netCheck.V();
                     break;
                 }
@@ -45,12 +47,13 @@ public class LabelManager {
         new Waiter(){
             @Override
             protected void doSomething(){
-                if(!SERVER_UP)
+                if(!SERVER_REACHABLE)
                     return;
                 if(!LOGGED_IN)
                     return;
                 if(!PersistencyManager.hasActivity())
                     return;
+                System.out.println("Sending labels to server");
                 Activity[] a = PersistencyManager.getActivity();
                 PersistencyManager.clearActivity();
                 Backend.load(a);//load the activities, if some error accours automaticaly read the activities to the persistency manager
@@ -73,10 +76,11 @@ public class LabelManager {
             labels.computeIfPresent(label, (k, v) -> v + 1);
             PersistencyManager.addLabel(new Lbl(label, labels.get(label)));
         }
-        if(SERVER_UP && LOGGED_IN)
-            Backend.load(label, comment);
+        Timestamp t = new Timestamp(System.currentTimeMillis());
+        if(SERVER_REACHABLE && LOGGED_IN)
+            Backend.load(label, comment, t);
         else
-            PersistencyManager.addActivity(label, comment);
+            PersistencyManager.addActivity(label, comment, t);
     }
 
     public static String[] getLabels(String in){

@@ -44,7 +44,8 @@ public class JsonUtils {
         map.put("user",a.user());
         map.put("label",a.label());
         map.put("ts",a.ts().toString());
-        map.put("file",a.file());
+        map.put("file","");
+        map.put("comment",a.comment());
         return new JSONObject(map).toString();
     }
 
